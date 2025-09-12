@@ -1,0 +1,22 @@
+{
+  "name": "finance-api",
+  "version": "1.0.0",
+  "description": "API de Instituição Financeira (Open Finance).",
+  "main": "server.js",
+  "license": "MIT",
+  "type": "commonjs",
+  "author": "Bruna Leticia",
+  "keywords": ["open finance", "nodejs", "express", "mongodb", "finance"],
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cpf-cnpj-validator": "^1.0.3",
+    "express": "^5.1.0",
+    "mongoose": "^8.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
