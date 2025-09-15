@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json()); // faz o parse de JSON no body
 
 // health check simples
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+//app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // rotas da API
 app.use('/api/customers', customerRoutes);

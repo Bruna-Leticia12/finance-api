@@ -6,15 +6,15 @@ const { ensureIsoDate } = require('../utils/validators');
 
 /**
  * POST /api/accounts
- * body: { customerId, type, branch, number, initialBalance? }
+ * body: { customerId, type, branch, number, initialBalance?, bankId, sharingAllowed }
  */
 async function createAccount(req, res) {
   try {
-    const { customerId, type, branch, number, initialBalance } = req.body;
+    const { customerId, type, branch, number, initialBalance, bankId, sharingAllowed } = req.body;
 
     // Validação básica de presença
-    if (!customerId || !type || !branch || !number) {
-      return res.status(400).json({ error: 'customerId, type, branch e number são obrigatórios' });
+    if (!customerId || !type || !branch || !number || !bankId) {
+      return res.status(400).json({ error: 'customerId, type, branch, number e bankId são obrigatórios' });
     }
 
     // Valida formato do ObjectId do customerId
@@ -42,6 +42,8 @@ async function createAccount(req, res) {
       branch: String(branch).trim(),
       number: String(number).trim(),
       balance,
+      bankId: String(bankId).trim(),
+      sharingAllowed: typeof sharingAllowed === 'boolean' ? sharingAllowed : true,
       customer: customer._id
     });
 
@@ -79,7 +81,9 @@ async function getBalance(req, res) {
       accountId: account._id,
       branch: account.branch,
       number: account.number,
-      balance: account.balance
+      balance: account.balance,
+      bankId: account.bankId,
+      sharingAllowed: account.sharingAllowed
     });
   } catch (err) {
     console.error('Erro em getBalance:', err);
@@ -205,9 +209,112 @@ async function listTransactions(req, res) {
   }
 }
 
+/**
+ * PATCH /api/accounts/:id/authorization
+ * body: { customerId, bankId, authorize }
+ */
+async function updateAuthorization(req, res) {
+  try {
+    const { id } = req.params;
+    const { customerId, bankId, authorize } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: 'ID da conta inválido' });
+    }
+    if (!mongoose.isValidObjectId(customerId)) {
+      return res.status(400).json({ error: 'customerId inválido' });
+    }
+    if (typeof authorize !== 'boolean') {
+      return res.status(400).json({ error: 'authorize deve ser boolean' });
+    }
+
+    const account = await Account.findOne({ _id: id, customer: customerId, bankId }).exec();
+    if (!account) {
+      return res.status(404).json({ error: 'Conta não encontrada para este cliente/banco' });
+    }
+
+    account.sharingAllowed = authorize;
+    await account.save();
+
+    return res.json({
+      accountId: account._id,
+      bankId: account.bankId,
+      sharingAllowed: account.sharingAllowed
+    });
+  } catch (err) {
+    console.error('Erro em updateAuthorization:', err);
+    return res.status(500).json({ error: 'Erro interno ao atualizar autorização' });
+  }
+}
+
+/**
+ * GET /api/accounts/:id
+ * Retorna os dados da conta e, se sharingAllowed === true, os dados do customer.
+ */
+async function getAccountDetails(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Valida id
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: 'ID da conta inválido' });
+    }
+
+    // Busca a conta
+    const account = await Account.findById(id).lean();
+    if (!account) return res.status(404).json({ error: 'Conta não encontrada' });
+
+    // Se não compartilha, retorna apenas informações mínimas
+    if (!account.sharingAllowed) {
+      return res.json({
+        accountId: account._id,
+        branch: account.branch,
+        number: account.number,
+        bankId: account.bankId,
+        sharingAllowed: account.sharingAllowed
+      });
+    }
+
+    // Se compartilha, monta resposta completa
+    const response = {
+      accountId: account._id,
+      type: account.type,
+      branch: account.branch,
+      number: account.number,
+      balance: account.balance,
+      bankId: account.bankId,
+      sharingAllowed: account.sharingAllowed,
+      transactionsCount: Array.isArray(account.transactions) ? account.transactions.length : 0,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt
+    };
+
+    // Busca dados do customer (somente se autorizado)
+    const customer = await Customer.findById(account.customer).lean();
+    if (customer) {
+      response.customer = {
+        customerId: customer._id,
+        name: customer.name,
+        email: customer.email,
+        cpf: customer.cpf,
+        accounts: customer.accounts || []
+      };
+    } else {
+      response.customer = null;
+    }
+
+    return res.json(response);
+  } catch (err) {
+    console.error('Erro em getAccountDetails:', err);
+    return res.status(500).json({ error: 'Erro interno ao obter detalhes da conta' });
+  }
+}
+
 module.exports = {
   createAccount,
   getBalance,
   createTransaction,
-  listTransactions
+  listTransactions,
+  updateAuthorization,
+  getAccountDetails
 };

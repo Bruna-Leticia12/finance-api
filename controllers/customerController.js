@@ -3,6 +3,7 @@ const { extractCpfDigits, isValidCpf } = require('../utils/validators');
 
 async function createCustomer(req, res) {
   try {
+
     const { name, cpf, email } = req.body;
 
     if (!name || !cpf || !email) {
@@ -23,7 +24,7 @@ async function createCustomer(req, res) {
     return res.status(201).json(customer);
 
   } catch (err) {
-    
+
     if (err?.code === 11000) {
       const field = Object.keys(err.keyPattern || {})[0] || 'campo único';
       return res.status(409).json({ error: `Já existe um registro com esse ${field}` });

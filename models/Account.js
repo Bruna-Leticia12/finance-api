@@ -28,6 +28,15 @@ const accountSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
       required: true
+    },
+    bankId: {
+      type: String,
+      required: [true, 'bankId é obrigatório'],
+      trim: true
+    },
+    sharingAllowed: {
+      type: Boolean,
+      required: [true, 'sharingAllowed é obrigatório']
     }
   },
   {
