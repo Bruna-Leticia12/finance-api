@@ -5,16 +5,16 @@ const accountSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ['checking', 'savings'],
-      required: [true, 'Tipo da conta é obrigatório']
+      required: [true]
     },
     branch: {
       type: String,
-      required: [true, 'Agência é obrigatória'],
+      required: [true],
       trim: true
     },
     number: {
       type: String,
-      required: [true, 'Número da conta é obrigatório'],
+      required: [true],
       trim: true
     },
     balance: {
@@ -31,12 +31,12 @@ const accountSchema = new mongoose.Schema(
     },
     bankId: {
       type: String,
-      required: [true, 'bankId é obrigatório'],
+      required: [true],
       trim: true
     },
     sharingAllowed: {
       type: Boolean,
-      required: [true, 'sharingAllowed é obrigatório']
+      required: [true]
     }
   },
   {
@@ -48,6 +48,7 @@ const accountSchema = new mongoose.Schema(
       }
     }
   }
+  
 );
 
 accountSchema.index({ branch: 1, number: 1 }, { unique: true });

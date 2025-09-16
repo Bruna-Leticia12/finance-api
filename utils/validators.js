@@ -18,7 +18,6 @@ function ensureIsoDate(value) {
 
   const [y, m, d] = str.split('-').map(Number);
 
-  // Date UTC - evitar problemas de timezone
   const dt = new Date(Date.UTC(y, m - 1, d));
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== m || dt.getUTCDate() !== d) {
     return null;

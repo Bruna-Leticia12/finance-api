@@ -8,26 +8,26 @@ const transactionSchema = new mongoose.Schema(
   {
     date: {
       type: String,
-      required: [true, 'Data é obrigatória (YYYY-MM-DD)'],
+      required: [true],
       validate: {
         validator: isValidDateFormat,
-        message: 'Data deve estar no formato YYYY-MM-DD'
+        message: 'Date must be in the YYYY-MM-DD format'
       }
     },
     description: {
       type: String,
-      required: [true, 'Descrição é obrigatória'],
+      required: [true],
       trim: true
     },
     amount: {
       type: Number,
-      required: [true, 'Valor é obrigatório'],
-      min: [0, 'Valor não pode ser negativo']
+      required: [true],
+      min: [0]
     },
     type: {
       type: String,
       enum: ['credit', 'debit'],
-      required: [true, 'Tipo é obrigatório']
+      required: [true]
     },
     category: {
       type: String,

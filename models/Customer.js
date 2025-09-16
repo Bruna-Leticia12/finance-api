@@ -4,19 +4,19 @@ const customerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Nome é obrigatório'],
+      required: [true],
       trim: true,
-      minlength: [2, 'Nome muito curto']
+      minlength: [2]
     },
     cpf: {
       type: String,
-      required: [true, 'CPF é obrigatório'],
+      required: [true],
       unique: true,
       trim: true
     },
     email: {
       type: String,
-      required: [true, 'Email é obrigatório'],
+      required: [true],
       unique: true,
       trim: true,
       lowercase: true
