@@ -22,7 +22,14 @@ const transactionSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: [true],
-      min: [0]
+      min: [0, 'O valor não pode ser negativo.'],
+      max: [1000000],
+      validate: {
+        validator: function (v) {
+            return /^\d+(\.\d{1,2})?$/.test(v.toString());
+        },
+        message: props => `${props.value} não é um valor válido.`
+      }
     },
     type: {
       type: String,

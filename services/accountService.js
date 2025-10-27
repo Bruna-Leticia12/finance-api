@@ -4,8 +4,8 @@ const Account = require('../models/Account');
 const Transaction = require('../models/Transaction');
 const { ensureIsoDate } = require('../utils/validators');
 
-async function createAccountService({ customerId, type, branch, number, initialBalance, bankId, sharingAllowed }) {
-  if (!customerId || !type || !branch || !number || !bankId) {
+async function createAccountService({ customerId, type, branch, number }) {
+  if (!customerId || !type || !branch || !number) {
     throw new Error('customerId, type, branch, number and bankId are required');
   }
 
@@ -16,22 +16,12 @@ async function createAccountService({ customerId, type, branch, number, initialB
   const customer = await Customer.findById(customerId);
   if (!customer) throw new Error('Customer not found');
 
-  let balance = 0;
-  if (initialBalance !== undefined) {
-    const parsed = Number(initialBalance);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      throw new Error('initialBalance inválido');
-    }
-    balance = parsed;
-  }
 
   const account = await Account.create({
     type,
     branch: String(branch).trim(),
     number: String(number).trim(),
-    balance,
-    bankId: String(bankId).trim(),
-    sharingAllowed: typeof sharingAllowed === 'boolean' ? sharingAllowed : true,
+    balance: 0,
     customer: customer._id
   });
 
@@ -50,7 +40,7 @@ async function getBalanceService(accountId) {
   return account;
 }
 
-async function createTransactionService(accountId, { date, description, amount, type, category }) {
+async function createTransactionService({ accountId, description, amount, type, category }) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -58,7 +48,7 @@ async function createTransactionService(accountId, { date, description, amount, 
   const account = await Account.findById(accountId);
   if (!account) throw new Error('Account not found');
 
-  const isoDate = ensureIsoDate(date);
+  const isoDate = ensureIsoDate(new Date().toISOString().split('T')[0]);
   if (!isoDate) throw new Error('Invalid date. Use YYYY-MM-DD');
 
   if (!description || typeof description !== 'string') {
@@ -66,7 +56,7 @@ async function createTransactionService(accountId, { date, description, amount, 
   }
 
   const parsedAmount = Number(amount);
-  if (!Number.isFinite(parsedAmount) || parsedAmount < 0) {
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
     throw new Error('Invalid amount');
   }
 

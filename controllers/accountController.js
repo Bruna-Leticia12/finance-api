@@ -36,7 +36,7 @@ async function getBalance(req, res) {
 
 async function createTransaction(req, res) {
   try {
-    const result = await createTransactionService(req.params.id, req.body);
+    const result = await createTransactionService(req.body);
     return res.status(201).json({
       transaction: result.txn,
       balanceAfter: result.balanceAfter

@@ -6,7 +6,9 @@ const customerSchema = new mongoose.Schema(
       type: String,
       required: [true],
       trim: true,
-      minlength: [2]
+      minlength: [5],
+      maxLength: [100],
+      match: [/^[A-Za-zÀ-ÿ\s]+$/, 'O nome não pode conter números ou caracteres especiais.']
     },
     cpf: {
       type: String,
@@ -19,7 +21,8 @@ const customerSchema = new mongoose.Schema(
       required: [true],
       unique: true,
       trim: true,
-      lowercase: true
+      lowercase: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'E-mail inválido.']
     },
     accounts: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }

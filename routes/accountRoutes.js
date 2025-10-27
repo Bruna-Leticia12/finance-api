@@ -12,7 +12,7 @@ const {
 
 router.post('/', createAccount);
 
-router.post('/:id/transactions', createTransaction);
+router.post('/transactions', createTransaction);
 
 router.get('/:id/transactions', listTransactions);
 

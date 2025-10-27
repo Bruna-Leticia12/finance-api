@@ -28,15 +28,6 @@ const accountSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
       required: true
-    },
-    bankId: {
-      type: String,
-      required: [true],
-      trim: true
-    },
-    sharingAllowed: {
-      type: Boolean,
-      required: [true]
     }
   },
   {
@@ -48,7 +39,6 @@ const accountSchema = new mongoose.Schema(
       }
     }
   }
-  
 );
 
 accountSchema.index({ branch: 1, number: 1 }, { unique: true });
