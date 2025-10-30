@@ -1,12 +1,12 @@
-const mongoose = require('mongoose');
-const Customer = require('../models/Customer');
-const Account = require('../models/Account');
-const Transaction = require('../models/Transaction');
-const { ensureIsoDate } = require('../utils/validators');
+import mongoose from 'mongoose';
+import Customer from '../models/Customer.js';
+import Account from '../models/Account.js';
+import Transaction from '../models/Transaction.js';
+import { ensureIsoDate } from '../utils/validators.js';
 
-async function createAccountService({ customerId, type, branch, number }) {
+export async function createAccountService({ customerId, type, branch, number}) {
   if (!customerId || !type || !branch || !number) {
-    throw new Error('customerId, type, branch, number and bankId are required');
+    throw new Error('customerId, type, branch, and number are required');
   }
 
   if (!mongoose.isValidObjectId(customerId)) {
@@ -15,7 +15,6 @@ async function createAccountService({ customerId, type, branch, number }) {
 
   const customer = await Customer.findById(customerId);
   if (!customer) throw new Error('Customer not found');
-
 
   const account = await Account.create({
     type,
@@ -31,7 +30,7 @@ async function createAccountService({ customerId, type, branch, number }) {
   return account;
 }
 
-async function getBalanceService(accountId) {
+export async function getBalanceService(accountId) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -40,7 +39,7 @@ async function getBalanceService(accountId) {
   return account;
 }
 
-async function createTransactionService({ accountId, description, amount, type, category }) {
+export async function createTransactionService({ accountId, description, amount, type, category }) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -86,10 +85,9 @@ async function createTransactionService({ accountId, description, amount, type, 
   await account.save();
 
   return { txn, balanceAfter: account.balance};
-
 }
 
-async function listTransactionsService(accountId, { from, to }) {
+export async function listTransactionsService(accountId, { from, to } = {}) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -118,7 +116,7 @@ async function listTransactionsService(accountId, { from, to }) {
   return { accountId: account._id, count: txns.length, transactions: txns };
 }
 
-async function updateAuthorizationService(accountId, { customerId, bankId, authorize }) {
+export async function updateAuthorizationService(accountId, { customerId, bankId, authorize }) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -126,7 +124,7 @@ async function updateAuthorizationService(accountId, { customerId, bankId, autho
     throw new Error('Invalid customerId');
   }
   if (typeof authorize !== 'boolean') {
-    throw new Error('authorization must be "true" or "false"');
+    throw new Error('authorization must be boolean');
   }
 
   const account = await Account.findOne({ _id: accountId, customer: customerId, bankId }).exec();
@@ -139,7 +137,7 @@ async function updateAuthorizationService(accountId, { customerId, bankId, autho
   return account;
 }
 
-async function getAccountDetailsService(accountId) {
+export async function getAccountDetailsService(accountId) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
@@ -157,6 +155,7 @@ async function getAccountDetailsService(accountId) {
     };
   }
 
+  const Customer = (await import('../models/Customer.js')).default;
   const customer = await Customer.findById(account.customer).lean();
   return {
     accountId: account._id,
@@ -179,12 +178,3 @@ async function getAccountDetailsService(accountId) {
       : null
   };
 }
-
-module.exports = {
-  createAccountService,
-  getBalanceService,
-  createTransactionService,
-  listTransactionsService,
-  updateAuthorizationService,
-  getAccountDetailsService
-};

@@ -1,10 +1,10 @@
 {
   "name": "finance-api",
   "version": "1.0.0",
-  "description": "API de Instituição Financeira (Open Finance).",
+  "description": "Financial Institution API (Open Finance Integration)",
   "main": "index.js",
+  "type": "module",
   "license": "MIT",
-  "type": "commonjs",
   "author": "Bruna Leticia",
   "keywords": [
     "open finance",
@@ -19,9 +19,13 @@
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "axios": "^1.13.1",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "cpf-cnpj-validator": "^1.0.3",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1"
   },
   "devDependencies": {

@@ -1,14 +1,12 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
   createTransaction,
   listTransactions,
-
-} = require('../controllers/accountController');
+} from '../controllers/accountController.js';
 
 router.post('/', createTransaction);
-
 router.get('/:id', listTransactions);
 
-module.exports = router;
+export default router;

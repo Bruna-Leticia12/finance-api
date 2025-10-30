@@ -1,25 +1,20 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
   createAccount,
   getBalance,
   createTransaction,
   listTransactions,
   updateAuthorization,
   getAccountDetails
-} = require('../controllers/accountController');
+} from '../controllers/accountController.js';
 
 router.post('/', createAccount);
-
 router.post('/transactions', createTransaction);
-
 router.get('/:id/transactions', listTransactions);
-
 router.get('/:id/balance', getBalance);
-
 router.patch('/:id/authorization', updateAuthorization);
-
 router.get('/:id', getAccountDetails);
 
-module.exports = router;
+export default router;

@@ -1,23 +1,23 @@
-const {
+import {
   createAccountService,
   getBalanceService,
   createTransactionService,
   listTransactionsService,
   updateAuthorizationService,
   getAccountDetailsService
-} = require('../services/accountService');
+} from '../services/accountService.js';
 
-async function createAccount(req, res) {
+export async function createAccount(req, res) {
   try {
     const account = await createAccountService(req.body);
     return res.status(201).json(account);
   } catch (err) {
-    console.error('Erro em createAccount:', err.message);
+    console.error('Error in createAccount:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
 
-async function getBalance(req, res) {
+export async function getBalance(req, res) {
   try {
     const account = await getBalanceService(req.params.id);
     return res.json({
@@ -29,12 +29,12 @@ async function getBalance(req, res) {
       sharingAllowed: account.sharingAllowed
     });
   } catch (err) {
-    console.error('Erro em getBalance:', err.message);
+    console.error('Error in getBalance:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
 
-async function createTransaction(req, res) {
+export async function createTransaction(req, res) {
   try {
     const result = await createTransactionService(req.body);
     return res.status(201).json({
@@ -42,22 +42,22 @@ async function createTransaction(req, res) {
       balanceAfter: result.balanceAfter
     });
   } catch (err) {
-    console.error('Erro em createTransaction:', err.message);
+    console.error('Error in createTransaction:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
 
-async function listTransactions(req, res) {
+export async function listTransactions(req, res) {
   try {
     const result = await listTransactionsService(req.params.id, req.query);
     return res.json(result);
   } catch (err) {
-    console.error('Erro em listTransactions:', err.message);
+    console.error('Error in listTransactions:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
 
-async function updateAuthorization(req, res) {
+export async function updateAuthorization(req, res) {
   try {
     const account = await updateAuthorizationService(req.params.id, req.body);
     return res.json({
@@ -66,26 +66,17 @@ async function updateAuthorization(req, res) {
       sharingAllowed: account.sharingAllowed
     });
   } catch (err) {
-    console.error('Erro em updateAuthorization:', err.message);
+    console.error('Error in updateAuthorization:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
 
-async function getAccountDetails(req, res) {
+export async function getAccountDetails(req, res) {
   try {
     const result = await getAccountDetailsService(req.params.id);
     return res.json(result);
   } catch (err) {
-    console.error('Erro em getAccountDetails:', err.message);
+    console.error('Error in getAccountDetails:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
-
-module.exports = {
-  createAccount,
-  getBalance,
-  createTransaction,
-  listTransactions,
-  updateAuthorization,
-  getAccountDetails
-};

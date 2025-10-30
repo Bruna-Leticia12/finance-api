@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const customerSchema = new mongoose.Schema(
   {
@@ -8,7 +8,7 @@ const customerSchema = new mongoose.Schema(
       trim: true,
       minlength: [5],
       maxLength: [100],
-      match: [/^[A-Za-zÀ-ÿ\s]+$/, 'O nome não pode conter números ou caracteres especiais.']
+      match: [/^[A-Za-zÀ-ÿ\s]+$/, 'Name cannot contain numbers or special characters.']
     },
     cpf: {
       type: String,
@@ -22,7 +22,12 @@ const customerSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'E-mail inválido.']
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email.']
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false
     },
     accounts: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }
@@ -33,10 +38,11 @@ const customerSchema = new mongoose.Schema(
     toJSON: {
       transform: (_, ret) => {
         delete ret.__v;
+        delete ret.password;
         return ret;
       }
     }
   }
 );
 
-module.exports = mongoose.model('Customer', customerSchema);
+export default mongoose.model('Customer', customerSchema);

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 function isValidDateFormat(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -22,13 +22,13 @@ const transactionSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: [true],
-      min: [0, 'O valor não pode ser negativo.'],
+      min: [0, 'Amount cannot be negative.'],
       max: [1000000],
       validate: {
         validator: function (v) {
             return /^\d+(\.\d{1,2})?$/.test(v.toString());
         },
-        message: props => `${props.value} não é um valor válido.`
+        message: props => `${props.value} is not a valid amount.`
       }
     },
     type: {
@@ -58,4 +58,4 @@ const transactionSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+export default mongoose.model('Transaction', transactionSchema);
