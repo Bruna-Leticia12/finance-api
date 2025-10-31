@@ -1,39 +1,40 @@
-import { createConsent } from '../services/consentService.js';
+import consentService from '../services/consentService.js';
 
-export async function create(req, res) {
+export async function listMyConsents(req, res, next) {
   try {
-    const { userId } = req;
-    const result = await createConsent(userId);
-    return res.status(201).json({
-      message: 'Consent created successfully.',
-      consentId: result.consent._id,
-      plainApiKey: result.plainApiKey
+    const consents = await consentService.getCustomerConsents(req.userId);
+    return res.status(200).json(consents);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function getMyConsentDetails(req, res, next) {
+  try {
+    const { id: consentId } = req.params;
+    const customerId = req.userId;
+
+    const consent = await consentService.getConsentById(consentId, customerId);
+    return res.status(200).json(consent);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function revokeMyConsent(req, res, next) {
+  try {
+    const { id: consentId } = req.params;
+    const customerId = req.userId;
+
+    const updatedConsent = await consentService.revokeConsent(
+      consentId,
+      customerId
+    );
+    return res.status(200).json({
+      message: 'Consent successfully revoked.',
+      consent: updatedConsent,
     });
   } catch (error) {
-    console.error('Error in create:', error.message);
-    return res.status(400).json({ error: error.message });
-  }
-}
-
-export async function list(req, res) {
-  try {
-    const { userId } = req;
-    const consents = await consentService.getConsentsByCustomer(userId);
-    return res.json(consents);
-  } catch (error) {
-    console.error('Error in list:', error.message);
-    return res.status(400).json({ error: error.message });
-  }
-}
-
-export async function revoke(req, res) {
-  try {
-    const { id } = req.params;
-    const { userId } = req;
-    const consent = await consentService.revokeConsent(id, userId);
-    return res.json({ message: 'Consent revoked.', consent });
-  } catch (error) {
-    console.error('Error in revoke:', error.message);
-    return res.status(400).json({ error: error.message });
+    return next(error);
   }
 }

@@ -1,3 +1,4 @@
+// routes/customerRoutes.js
 import express from 'express';
 import {
   createCustomer,
@@ -8,15 +9,20 @@ import {
   deleteCustomer
 } from '../controllers/customerController.js';
 
+import authMiddleware from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
 console.log('customerRoutes.js foi carregado com sucesso');
 
-router.post('/', createCustomer);       // POST /customers
-router.post('/login', login);           // POST /customers/login
-router.get('/', getAllCustomers);       // GET /customers
-router.get('/:id', getCustomerById);    // GET /customers/:id
-router.put('/:id', updateCustomer);     // PUT /customers/:id
-router.delete('/:id', deleteCustomer);  // DELETE /customers/:id
+router.post('/', createCustomer);    
+router.post('/login', login);           
+
+router.use(authMiddleware);
+
+router.get('/', getAllCustomers);    
+router.get('/:id', getCustomerById);   
+router.put('/:id', updateCustomer);
+router.delete('/:id', deleteCustomer);
 
 export default router;

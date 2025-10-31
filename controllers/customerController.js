@@ -3,8 +3,13 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import Customer from '../models/Customer.js';
 import customerService from '../services/customerService.js';
+
 import { createAndGenerateKey } from '../services/consentService.js';
-import { BadRequestError, UnauthorizedError, ApiError } from '../exceptions/api-errors.js';
+import {
+  BadRequestError,
+  UnauthorizedError,
+  ApiError,
+} from '../exceptions/api-errors.js';
 import { extractCpfDigits } from '../utils/validators.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
@@ -28,7 +33,7 @@ export async function createCustomer(req, res, next) {
       name,
       email,
       cpf: cleanCpf,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     return res.status(201).json(newCustomer);
@@ -42,23 +47,38 @@ export async function login(req, res, next) {
     const { cpf, password } = req.body;
     const { connectionId, callbackUrl } = req.query;
 
-    if (!cpf || !password) throw new BadRequestError('CPF and password are required.');
+    if (!cpf || !password) {
+      throw new BadRequestError('CPF and password are required.');
+    }
 
     const cleanCpf = extractCpfDigits(cpf);
     if (!cleanCpf) throw new BadRequestError('Invalid CPF.');
 
-    const customer = await Customer.findOne({ cpf: cleanCpf }).select('+password');
-    if (!customer) throw new UnauthorizedError('Invalid CPF or password.');
+    const customer = await Customer.findOne({ cpf: cleanCpf }).select(
+      '+password'
+    );
+    if (!customer) {
+      throw new UnauthorizedError('Invalid CPF or password.');
+    }
 
     const isMatch = await bcrypt.compare(password, customer.password);
-    if (!isMatch) throw new UnauthorizedError('Invalid CPF or password.');
+    if (!isMatch) {
+      throw new UnauthorizedError('Invalid CPF or password.');
+    }
 
+    // Fluxo de conexão (ex: ControlF)
     if (connectionId && callbackUrl) {
-      const controlFResponse = await handleControlFConnection(connectionId, customer._id, callbackUrl);
+      const controlFResponse = await handleControlFConnection(
+        connectionId,
+        customer._id,
+        callbackUrl
+      );
       return res.status(200).json(controlFResponse);
     }
 
-    const token = jwt.sign({ id: customer._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign({ id: customer._id }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
     return res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
     return next(error);
@@ -66,23 +86,35 @@ export async function login(req, res, next) {
 }
 
 async function handleControlFConnection(connectionId, customerId, callbackUrl) {
-  const { plainApiKey, userIdInChildApi } = await createAndGenerateKey({ customer: customerId });
+  const { plainApiKey, userIdInChildApi } = await createAndGenerateKey({
+    customerId,
+  });
 
   if (!plainApiKey || !userIdInChildApi) {
-    throw new Error('Failed to create consent and generate API key');
+    throw new ApiError(500, 'Failed to create consent and generate API key');
   }
 
-  const response = await axios.patch(
-    callbackUrl,
-    { apiKey: plainApiKey, userIdInChildApi, connectionId },
-    { timeout: 5000 }
-  );
-
-  if (response.status !== 200) {
-    throw new Error(`Failed to notify ControlF. Status code: ${response.status}`);
+  try {
+    await axios.patch(
+      callbackUrl,
+      { apiKey: plainApiKey, userIdInChildApi, connectionId },
+      { timeout: 5000 } // 5 segundos
+    );
+  } catch (error) {
+    console.error('Failed to notify ControlF:', error.message);
+    throw new ApiError(
+      502, 
+      `Failed to notify the callback URL. Status: ${
+        error.response?.status || 'N/A'
+      }`
+    );
   }
 
-  return { message: 'ControlF connection established', customerId };
+  return {
+    message: 'ControlF connection established',
+    customerId,
+    _plainApiKeyForTesting: plainApiKey,
+  };
 }
 
 export async function getAllCustomers(req, res, next) {
@@ -109,7 +141,11 @@ export async function updateCustomer(req, res, next) {
   try {
     const { id } = req.params;
     const { name, email } = req.body;
-    const customer = await Customer.findByIdAndUpdate(id, { name, email }, { new: true }).select('-password');
+    const customer = await Customer.findByIdAndUpdate(
+      id,
+      { name, email },
+      { new: true }
+    ).select('-password');
     if (!customer) throw new ApiError(404, 'Customer not found.');
     return res.json({ message: 'Customer successfully updated.', customer });
   } catch (err) {
@@ -134,5 +170,5 @@ export default {
   getAllCustomers,
   getCustomerById,
   updateCustomer,
-  deleteCustomer
+  deleteCustomer,
 };

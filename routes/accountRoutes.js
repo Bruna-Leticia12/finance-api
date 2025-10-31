@@ -1,6 +1,8 @@
 import express from 'express';
 const router = express.Router();
 
+import authMiddleware from '../middlewares/authMiddleware.js';
+
 import {
   createAccount,
   getBalance,
@@ -9,6 +11,8 @@ import {
   updateAuthorization,
   getAccountDetails
 } from '../controllers/accountController.js';
+
+router.use(authMiddleware);
 
 router.post('/', createAccount);
 router.post('/transactions', createTransaction);

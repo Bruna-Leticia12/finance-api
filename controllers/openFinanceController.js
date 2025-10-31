@@ -74,7 +74,7 @@ class OpenFinanceController {
         permissions,
         expirationDateTime,
         apiKey,
-        plainApiKey: apiKey // Apenas para teste
+        plainApiKey: apiKey // Apenas teste
       });
 
       res.status(201).json(consent);
