@@ -4,49 +4,30 @@ import crypto from 'crypto';
 const consentSchema = new mongoose.Schema(
   {
     customer: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Customer',
       required: true,
-      index: true,
     },
     status: {
       type: String,
-      enum: ['AWAITING_AUTHORIZATION', 'AUTHORIZED', 'REVOKED', 'EXPIRED'],
-      default: 'AWAITING_AUTHORIZATION',
+      enum: ['PENDING', 'AUTHORIZED', 'REVOKED', 'UNAUTHORIZED'],
+      default: 'UNAUTHORIZED',
       required: true,
-    },
-    permissions: [
-      {
-        type: String,
-        enum: [
-          'ACCOUNTS_READ',
-          'ACCOUNTS_BALANCES_READ',
-          'TRANSACTIONS_READ',
-          'CUSTOMERS_PERSONAL_IDENTIFICATIONS_READ',
-        ],
-        required: true,
-      },
-    ],
+    },    
     expirationDateTime: {
-      type: Date,
-      required: true,
+        type: Date,
+        default: () => 
+            new Date(new Date().setFullYear(new Date().getFullYear() + 1))
     },
     apiKey: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
     },
   },
   {
-    timestamps: true,
-    toJSON: {
-      transform: (_, ret) => {
-        delete ret.__v;
-        delete ret.apiKey; 
-        return ret;
-      },
-    },
-  }
+    timestamps: true,   
+  },  
 );
 
 consentSchema.methods.compareApiKey = function (plainApiKey) {

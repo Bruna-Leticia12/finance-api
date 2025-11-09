@@ -1,22 +1,27 @@
-import { UnauthorizedError, ForbiddenError } from '../exceptions/api-errors.js';
-import { verifyApiKeyService } from '../services/consentService.js';
 
-export async function verifyApiKey(req, res, next) {
-  try {
-    const apiKey = req.headers['x-api-key'];
-    if (!apiKey) {
-      throw new UnauthorizedError('API key is missing from x-api-key header.');
+import { UnauthorizedError } from '../exceptions/api-errors.js';
+
+export default async function (req, _, next) {
+  const apiKeyHeader = req.headers['x-api-key'];
+
+  if (apiKeyHeader) {
+    try {
+      const consent = await ExternalConsent.findOne({ apiKey: apiKeyHeader });
+
+      if (!consent || consent.status !== 'AUTHORIZED' || consent.expirationDateTime <= new Date()) {
+        throw new ForbiddenError('API Key inválida, revogada ou expirada.');
+      }
+
+      req.consentInfo = {
+        consentId: consent._id,
+        customerId: consent.customer,
+        permissions: consent.permissions
+      };
+      return next();
+
+    } catch (error) {
+      return next(error);
     }
-    const consent = await verifyApiKeyService(apiKey);
-    if (!consent) {
-      throw new ForbiddenError('Invalid, revoked, or expired API key.');
-    }
-    req.consent = consent;
-    next();
-  } 
-  catch (error) {
-    next(error);
   }
-}
-
-export default { verifyApiKey };
+  return next(new UnauthorizedError('Autenticação necessária. Forneça um Token JWT ou API Key válida.'));
+};

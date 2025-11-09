@@ -1,18 +1,21 @@
 import jwt from 'jsonwebtoken';
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+import { UnauthorizedError } from '../exceptions/api-errors.js';
 
-export default function (req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ message: 'Token not provided.' });
+export default async function (req, _, next) {
+  const authHeader = req.headers['authorization'];
 
-  const token = authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Invalid token.' });
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.id;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Expired or invalid token.' });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    if (token) {
+      try {
+        const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decodedPayload;
+        return next();
+      } catch (err) {
+        return next(new UnauthorizedError('Token JWT inválido ou expirado.'));
+      }
+    }
   }
+
+  return next(new UnauthorizedError('Autenticação necessária. Forneça um Token JWT ou API Key válida.'));
 };

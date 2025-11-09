@@ -13,8 +13,6 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-console.log('customerRoutes.js foi carregado com sucesso');
-
 router.post('/', createCustomer);    
 router.post('/login', login);           
 

@@ -3,38 +3,32 @@ import mongoose from 'mongoose';
 import Consent from '../models/Consent.js';
 import Customer from '../models/Customer.js';
 import { ApiError } from '../exceptions/api-errors.js';
+import bcrypt from "bcryptjs";
 
-export async function createAndGenerateKey({ customerId }) {
-  if (!mongoose.isValidObjectId(customerId)) {
+export async function createAndGenerateKey({ customer }) {
+  if (!mongoose.isValidObjectId(customer)) {
     throw new ApiError(400, 'Invalid customer ID.');
   }
-  const customer = await Customer.findById(customerId);
+  const customerFound = await Customer.findById(customer._id);
   if (!customer) {
     throw new ApiError(404, 'Customer not found.');
   }
   const plainApiKey = crypto.randomBytes(32).toString('hex');
-  const hashedApiKey = crypto
-    .createHash('sha256')
-    .update(plainApiKey)
-    .digest('hex');
-  // Data de expiração (1 ano)
-  const expirationDateTime = new Date();
-  expirationDateTime.setFullYear(expirationDateTime.getFullYear() + 1);
+  const salt = await bcrypt.genSalt(10);
+  const hashedApiKey = await bcrypt.hash(plainApiKey, salt);
+  
 
-  const permissions = [
-    'ACCOUNTS_READ',
-    'ACCOUNTS_BALANCES_READ',
-    'TRANSACTIONS_READ',
-    'CUSTOMERS_PERSONAL_IDENTIFICATIONS_READ',
-  ];
-  await Consent.create({
-    customer: customerId,
-    status: 'AUTHORIZED', 
-    permissions,
-    expirationDateTime,
+  const consent = await Consent.create({
+    customer: customerFound._id,
     apiKey: hashedApiKey,
+    status: 'AUTHORIZED', 
   });
-  return { plainApiKey, userIdInChildApi: customerId.toString() };
+  
+  return { 
+    plainApiKey, 
+    userIdInChildApi: customerFound,
+    consentId: String(consent._id)
+  };
 }
 
 export async function verifyApiKeyService(plainApiKey) {

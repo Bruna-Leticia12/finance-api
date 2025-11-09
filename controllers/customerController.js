@@ -43,78 +43,69 @@ export async function createCustomer(req, res, next) {
 }
 
 export async function login(req, res, next) {
+  
   try {
     const { cpf, password } = req.body;
     const { connectionId, callbackUrl } = req.query;
-
     if (!cpf || !password) {
-      throw new BadRequestError('CPF and password are required.');
+      throw new BadRequestError("CPF and password are required");
     }
-
-    const cleanCpf = extractCpfDigits(cpf);
-    if (!cleanCpf) throw new BadRequestError('Invalid CPF.');
-
-    const customer = await Customer.findOne({ cpf: cleanCpf }).select(
-      '+password'
-    );
+    const customer = await Customer.findOne({ cpf }).select('+password');
     if (!customer) {
-      throw new UnauthorizedError('Invalid CPF or password.');
+      throw new UnauthorizedError("Invalid CPF or password");
     }
-
     const isMatch = await bcrypt.compare(password, customer.password);
     if (!isMatch) {
-      throw new UnauthorizedError('Invalid CPF or password.');
+      throw new UnauthorizedError("Invalid CPF or password");
     }
 
-    // Fluxo de conexão (ex: ControlF)
     if (connectionId && callbackUrl) {
-      const controlFResponse = await handleControlFConnection(
-        connectionId,
-        customer._id,
-        callbackUrl
-      );
-      return res.status(200).json(controlFResponse);
+      const controlFResponse = await handleControlFConnection(connectionId, customer._id, callbackUrl);
+      res.status(200).json(controlFResponse);
+    } else {
+      const token = jwt.sign({ id: customer._id }, process.env.JWT_SECRET, { expiresIn: '3d' });
+      res.status(200).json({
+        message: 'login successful',
+        token
+      });
     }
-
-    const token = jwt.sign({ id: customer._id }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
-    return res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
-    return next(error);
+    next(error)
   }
 }
 
-async function handleControlFConnection(connectionId, customerId, callbackUrl) {
-  const { plainApiKey, userIdInChildApi } = await createAndGenerateKey({
-    customerId,
-  });
-
-  if (!plainApiKey || !userIdInChildApi) {
-    throw new ApiError(500, 'Failed to create consent and generate API key');
-  }
-
+export async function handleControlFConnection(connectionId, customerId, callbackUrl, next) {
   try {
-    await axios.patch(
-      callbackUrl,
-      { apiKey: plainApiKey, userIdInChildApi, connectionId },
-      { timeout: 5000 } // 5 segundos
-    );
-  } catch (error) {
-    console.error('Failed to notify ControlF:', error.message);
-    throw new ApiError(
-      502, 
-      `Failed to notify the callback URL. Status: ${
-        error.response?.status || 'N/A'
-      }`
-    );
-  }
+    const { plainApiKey, userIdInChildApi, consentId } = await createAndGenerateKey({ customer: customerId });
+    if (!plainApiKey || !userIdInChildApi) {
+      throw new Error("Failed to create external consent and generate API key");
+    }
 
-  return {
-    message: 'ControlF connection established',
-    customerId,
-    _plainApiKeyForTesting: plainApiKey,
-  };
+    const response = await axios.patch(callbackUrl, {
+      apiKey: plainApiKey,
+      userIdInChildApi,
+      connectionId,
+      consentIdInChildApi: consentId
+    },
+     {
+      headers: {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MGViZWUzOTcxMTU2MDkyNjI4NmQ1OCIsImlhdCI6MTc2MjYzNjcyNywiZXhwIjoxNzYyNjQwMzI3fQ.vVmQE9yhJFS4skvTYWBI56KuWAyG2JmEM5bJ_gXzfCI",
+      },
+    }
+  );
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to notify ControlF. Status code: ${response.status}`);
+    }
+
+    return {
+      message: 'ControlF connection established',
+      customerId
+    };
+
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function getAllCustomers(req, res, next) {
