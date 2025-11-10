@@ -5,11 +5,18 @@ import accountRoutes from './routes/accountRoutes.js';
 import transactionsRoutes from './routes/transactionsRoutes.js';
 import openFinanceRoutes from './routes/openFinanceRoutes.js';
 import consentRoutes from './routes/consentRoutes.js';
+import cors from 'cors';
 
 import errorHandler from './middlewares/errorHandler.js';
 
 const app = express();
 app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:4200',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use('/customers', customerRoutes);
 app.use('/accounts', accountRoutes);
