@@ -17,21 +17,6 @@ class OpenFinanceController {
     }
   }
 
-  // GET /openfinance/customers/:id/accounts
-  async getCustomerAccounts(req, res, next) {
-    try {
-      const accounts = await Account.find({ customer: req.params.id })
-        .populate('customer', 'name');
-
-      if (!accounts.length)
-        return res.status(404).json({ message: 'No accounts found for this customer' });
-
-      res.json(accounts);
-    } catch (error) {
-      next(error);
-    }
-  }
-
   // GET /openfinance/accounts/:id/balance
   async getAccountBalance(req, res, next) {
     try {
@@ -48,21 +33,6 @@ class OpenFinanceController {
     }
   }
 
-  // GET /openfinance/accounts/:id/transactions
-  async getAccountTransactions(req, res, next) {
-    try {
-      const account = await Account.findById(req.params.id)
-        .populate('transactions');
-
-      if (!account)
-        return res.status(404).json({ message: 'Account not found' });
-
-      res.json(account.transactions);
-    } catch (error) {
-      next(error);
-    }
-  }
-
   // POST /openfinance/consents
   async createConsent(req, res, next) {
     try {
@@ -74,7 +44,7 @@ class OpenFinanceController {
         permissions,
         expirationDateTime,
         apiKey,
-        plainApiKey: apiKey // Apenas teste
+        plainApiKey: apiKey
       });
 
       res.status(201).json(consent);
@@ -118,3 +88,33 @@ class OpenFinanceController {
 }
 
 export default new OpenFinanceController();
+
+// GET /openfinance/customers/:id/accounts
+export async function getCustomerAccounts(req, res, next) {
+  try {
+    const accounts = await Account.find({ customer: req.params.id })
+      .populate('customer', 'name');
+
+    if (!accounts.length)
+      return res.status(404).json({ message: 'No accounts found for this customer' });
+
+    res.json(accounts);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// GET /openfinance/accounts/:id/transactions
+export async function getAccountTransactions(req, res, next) {
+  try {
+    const account = await Account.findById(req.params.id)
+      .populate('transactions');
+
+    if (!account)
+      return res.status(404).json({ message: 'Account not found' });
+
+    res.json(account.transactions);
+  } catch (error) {
+    next(error);
+  }
+}
