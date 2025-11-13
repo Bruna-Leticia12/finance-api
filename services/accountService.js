@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import Customer from '../models/Customer.js';
 import Account from '../models/Account.js';
-import Transaction from '../models/Transaction.js';
+import Transaction, { TransactionCategory } from '../models/Transaction.js';
 import { ensureIsoDate } from '../utils/validators.js';
 
-export async function createAccountService({ customerId, type, branch, number}) {
+export async function createAccountService({ customerId, type, branch, number }) {
   if (!customerId || !type || !branch || !number) {
     throw new Error('customerId, type, branch, and number are required');
   }
@@ -34,8 +34,10 @@ export async function getBalanceService(accountId) {
   if (!mongoose.isValidObjectId(accountId)) {
     throw new Error('Invalid account ID');
   }
+
   const account = await Account.findById(accountId).lean();
   if (!account) throw new Error('Account not found');
+
   return account;
 }
 
@@ -63,20 +65,28 @@ export async function createTransactionService({ accountId, description, amount,
     throw new Error('Type must be credit or debit');
   }
 
+  const validCategories = Object.values(TransactionCategory);
+  const normalizedCategory = category?.toUpperCase().trim();
+
+  if (!normalizedCategory || !validCategories.includes(normalizedCategory)) {
+    throw new Error(`Invalid category. Allowed values: ${validCategories.join(', ')}`);
+  }
+
   if (type === 'debit' && account.balance < parsedAmount) {
     throw new Error('Insufficient balance');
   }
 
-  const newBalance = type === 'credit'
-    ? account.balance + parsedAmount
-    : account.balance - parsedAmount;
+  const newBalance =
+    type === 'credit'
+      ? account.balance + parsedAmount
+      : account.balance - parsedAmount;
 
   const txn = await Transaction.create({
     date: isoDate,
     description: description.trim(),
     amount: parsedAmount,
     type,
-    category: category ? String(category).trim() : undefined,
+    category: normalizedCategory,
     account: account._id
   });
 
@@ -84,7 +94,7 @@ export async function createTransactionService({ accountId, description, amount,
   account.balance = newBalance;
   await account.save();
 
-  return { txn, balanceAfter: account.balance};
+  return { txn, balanceAfter: account.balance };
 }
 
 export async function listTransactionsService(accountId, { from, to } = {}) {
@@ -157,6 +167,7 @@ export async function getAccountDetailsService(accountId) {
 
   const Customer = (await import('../models/Customer.js')).default;
   const customer = await Customer.findById(account.customer).lean();
+
   return {
     accountId: account._id,
     type: account.type,
@@ -164,7 +175,9 @@ export async function getAccountDetailsService(accountId) {
     number: account.number,
     bankId: account.bankId,
     sharingAllowed: account.sharingAllowed,
-    transactionsCount: Array.isArray(account.transactions) ? account.transactions.length : 0,
+    transactionsCount: Array.isArray(account.transactions)
+      ? account.transactions.length
+      : 0,
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
     customer: customer
